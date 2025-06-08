@@ -89,3 +89,14 @@ flowchart TD
 The server also exposes metrics through Prometheus and logs using the tracing
 crate. Redis and a SQL database (PostgreSQL or SQLite) are used for runtime
 state and persistent storage respectively.
+
+## Device management
+ChirpStack keeps registered devices in the `device` table. The [create](chirpstack/src/storage/device.rs#L252-L297) function validates tenant limits before inserting a new entry. Devices can be modified through [update](chirpstack/src/storage/device.rs#L562-L584) or [partial_update](chirpstack/src/storage/device.rs#L586-L595) and removed using [delete](chirpstack/src/storage/device.rs#L597-L605).
+
+Each device record may store a serialized `DeviceSession` containing frame counters and class state. Device activity is tracked with the `last_seen_at` timestamp which is used by [get_active_inactive](chirpstack/src/storage/device.rs#L775-L799) to report active and inactive counts.
+
+### Application data
+Downlink messages are queued in the `device_queue_item` table. Items are added with [enqueue_item](chirpstack/src/storage/device_queue.rs#L66-L76) and retrieved using [get_next_for_dev_eui](chirpstack/src/storage/device_queue.rs#L114-L141). The queue supports updating, deleting and flushing items for a device.
+
+### Runtime state
+Gateway reception metadata is stored in Redis through [save_rx_info](chirpstack/src/storage/device_gateway.rs#L12-L27) and retrieved with [get_rx_info](chirpstack/src/storage/device_gateway.rs#L30-L42). This temporary state helps schedule downlinks and is kept in sync with the SQL device session data.
