@@ -44,6 +44,21 @@ flowchart TD
     Proc -->|Data events| Integration
 ```
 
+### Deduplication flow
+When multiple gateways forward the same uplink, ChirpStack merges them before
+processing. The events are stored in Redis and a short lock prevents multiple
+workers from handling the same frame set.
+
+```mermaid
+flowchart TD
+    A[Receive uplink] --> B[Store in Redis set]
+    B --> C{Lock obtained?}
+    C -- No --> G[Return]
+    C -- Yes --> D[Wait deduplication delay]
+    D --> E[Collect all frames]
+    E --> F[Process UplinkFrameSet]
+```
+
 ## Downlink processing
 External applications enqueue downlinks through the gRPC API. The network server
 schedules the frame and forwards it to the gateway.
