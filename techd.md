@@ -70,6 +70,22 @@ flowchart TD
     GW --RF--> Device
 ```
 
+## Confirmed uplink flow
+When a device sends a confirmed uplink, the network server records that an ACK
+must be sent. On the next downlink window (RX1 or RX2) it transmits a frame with
+the `ACK` bit set in the FCtrl field. If an application downlink is already
+queued, the ACK is piggy‑backed on that frame. Otherwise the server schedules an
+empty downlink just to convey the acknowledgement. After the transmission the
+downlink counter is updated and the pending ACK flag is cleared.
+
+```mermaid
+flowchart TD
+    Device --confirmed uplink--> GW
+    GW --> NS
+    NS -->|ACK| GW
+    GW --RF--> Device
+```
+
 The server also exposes metrics through Prometheus and logs using the tracing
 crate. Redis and a SQL database (PostgreSQL or SQLite) are used for runtime
 state and persistent storage respectively.
