@@ -25,9 +25,30 @@ capabilities found in the code base.
       Ok(())
   }
   ```
-  This means the code depends on the external Gateway Bridge for protocol
-  translation, so direct Basics Station or Semtech Packet Forwarder handling is
-  not present.
+  This means the code depends on an external service called the *ChirpStack
+  Gateway Bridge* for protocol translation. The bridge speaks the native
+  gateway protocols (Semtech UDP, LoRa Basics Station or ChirpStack
+  Concentratord) and forwards them as MQTT messages. ChirpStack only processes
+  these MQTT frames and does not implement the low-level protocol logic itself.
+- The `MqttBackend` subscribes to topics like `gateway/+/event/+` (optionally
+  namespaced by the region `topic_prefix`) and publishes commands on
+  `gateway/<id>/command/<cmd>` inside an asynchronous event loop. Example
+  subscription code:
+  ```rust
+  // chirpstack/src/gateway/backend/mqtt.rs
+  let event_topic = if conf.event_topic.is_empty() {
+      let event_topic = "gateway/+/event/+".to_string();
+      if conf.topic_prefix.is_empty() {
+          event_topic
+      } else {
+          format!("{}/{}", conf.topic_prefix, event_topic)
+      }
+  } else {
+      conf.event_topic.clone()
+  };
+  info!(region_id = %region_config_id, event_topic = %event_topic,
+        "Subscribing to gateway event topic");
+  ```
 - The MQTT backend builds its connection using `MqttOptions::parse_url`, which
   reads the configured `server` URL and supports `tcp`, `ssl` or `ws` schemes.
   Configuration files show this with:
