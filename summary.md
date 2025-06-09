@@ -28,6 +28,15 @@ capabilities found in the code base.
   This means the code depends on the external Gateway Bridge for protocol
   translation, so direct Basics Station or Semtech Packet Forwarder handling is
   not present.
+- The MQTT backend builds its connection using `MqttOptions::parse_url`, which
+  reads the configured `server` URL and supports `tcp`, `ssl` or `ws` schemes.
+  Configuration files show this with:
+  ```toml
+  # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
+  server = "tcp://localhost:1883"
+  ```
+  When `ws` or `wss` is used, the Gateway Bridge communicates with ChirpStack
+  over MQTT on top of WebSockets.
 
 ## Message Processing
 - Uplink frames are deduplicated using Redis before processing. The function
